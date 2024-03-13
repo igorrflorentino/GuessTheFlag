@@ -42,6 +42,7 @@ struct ContentView: View {
     @State private var score = 0
     @State private var questionCounter = 0
     @State private var showingResults = false
+	@State private var selectedFlag = -1
     
     let scoreIncriseBy = 1
     let gameLength = 2
@@ -68,11 +69,18 @@ struct ContentView: View {
                     }
                     ForEach(0..<3){ number in
                         Button {
-                            flagTapped(number)
-                        } label: {
+								flagTapped(number)
+                        }label: {
                             FlagImage(countryName: countries[number])
-                        }
-                    }
+						}
+						.rotation3DEffect(
+							.degrees(selectedFlag == number ? 360:0),
+							axis: (x: 0.0, y: 1.0, z: 0.0)
+						)
+						.opacity(selectedFlag == -1 || selectedFlag == number ? 1:0.25)
+						.saturation(selectedFlag == -1 || selectedFlag == number ? 1:0)
+						.animation(.default, value: selectedFlag)
+					}
                 }.frame(maxWidth: .infinity)
                     .padding(.vertical,20)
                     .background(.ultraThinMaterial)
@@ -96,37 +104,38 @@ struct ContentView: View {
         }
     }
     
-    func flagTapped (_ number: Int) {
-        
-        if number == correctAnswer {
-            scoreTitle = "Correct!"
-            scoreMessage = "You earned \(scoreIncriseBy)"
-            score += 1
-        } else {
-            let needsTHE = ["US", "UK"]
-            if needsTHE.contains(countries[number]){
-                scoreTitle = "Wrong! that's the flag of the \(countries[number])"
-            } else {
-                scoreTitle = "Wrong! that's the flag of \(countries[number])"
-            }
-            scoreMessage = "No points earned"
-        }
-        
-        if questionCounter >= gameLength {
-            showingScore = true
-            showingResults = true
-        } else {
-            showingScore = true
-        }
-        
-        questionCounter += 1
-    }
+	func flagTapped (_ number: Int) {
+		selectedFlag = number
+		if number == correctAnswer {
+			scoreTitle = "Correct!"
+			scoreMessage = "You earned \(scoreIncriseBy)"
+			score += 1
+		} else {
+			let needsTHE = ["US", "UK"]
+			if needsTHE.contains(countries[number]){
+				scoreTitle = "Wrong! that's the flag of the \(countries[number])"
+			} else {
+				scoreTitle = "Wrong! that's the flag of \(countries[number])"
+			}
+			scoreMessage = "No points earned"
+		}
+		DispatchQueue.main.asyncAfter(deadline: .now() + 0.4){
+			if questionCounter >= gameLength {
+				showingScore = true
+				showingResults = true
+			} else {
+				showingScore = true
+			}
+		}
+		questionCounter += 1
+	}
     
     func askQuestion() {
         if !showingResults{
             countries.remove(at: correctAnswer)
             countries.shuffle()
             correctAnswer = Int.random(in: 0...2)
+			selectedFlag = -1
         }
     }
     
